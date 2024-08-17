@@ -1,0 +1,21 @@
+[package]
+name = "api-gateway"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.86"
+async-graphql = "7.0.7"
+async-graphql-poem = "7.0.7"
+async-trait = "0.1.81"
+jsonwebtoken = "9.3.0"
+poem = {version = "3.0.4", features = ["websocket"]}
+serde = {version = "1.0.204", features = ["derive"]}
+serde_json = "1.0.122"
+tokio = {version = "1.39.2", features = ["full"]}
+tokio-stream = "0.1.15"
+toml = "0.8.19"
+tracing = "0.1.40"
+tracing-subscriber = "0.3.18"
+user-service = { path = "../services/user-service" }
+uuid = {version = "1.10.0", features = ["v4"]}

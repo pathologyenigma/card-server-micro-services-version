@@ -1,0 +1,43 @@
+[Header]
+typ = "JWT"
+# alg= "HS256"
+# cty= None
+# jku= None
+# jwk= None
+# kid= None
+# x5u= None
+# x5c= None
+# x5t= None
+# x5t_s256= None
+
+#     HMAC using SHA-256
+#     #[default]
+#     HS256,
+#     /// HMAC using SHA-384
+#     HS384,
+#     /// HMAC using SHA-512
+#     HS512,
+
+#     /// ECDSA using SHA-256
+#     ES256,
+#     /// ECDSA using SHA-384
+#     ES384,
+
+#     /// RSASSA-PKCS1-v1_5 using SHA-256
+#     RS256,
+#     /// RSASSA-PKCS1-v1_5 using SHA-384
+#     RS384,
+#     /// RSASSA-PKCS1-v1_5 using SHA-512
+#     RS512,
+
+#     /// RSASSA-PSS using SHA-256
+#     PS256,
+#     /// RSASSA-PSS using SHA-384
+#     PS384,
+#     /// RSASSA-PSS using SHA-512
+#     PS512,
+
+#     /// Edwards-curve Digital Signature Algorithm (EdDSA)
+#     EdDSA,
+
+secret_key = "your-secret-key"

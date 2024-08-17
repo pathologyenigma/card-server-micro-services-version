@@ -1,0 +1,22 @@
+[package]
+name = "card-server"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[workspace]
+members = [ "api-gateway", "rpc-server", "services/*" ]
+
+[[bin]]
+name = "rpc-server"
+path = "src/rpc_server.rs"
+
+[[bin]]
+name = "api-gateway"
+path = "src/api_gateway.rs"
+
+[dependencies]
+api-gateway = { path = "api-gateway" }
+rpc-server = { path = "rpc-server" }
+tokio = { version = "1", features = ["full"] }

@@ -1,0 +1,177 @@
+syntax = "proto3";
+
+package user;
+
+service UserService {
+    rpc GetUserInfo(GetUserRequest) returns (GetUserResponse);
+    rpc CreateUser(CreateUserRequest) returns (CreateUserResponse);
+    rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse);
+    rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse);
+    rpc Login(LoginRequest) returns (LoginResponse);
+    rpc SendFriendRequest(SendFriendRequestRequest) returns (SendFriendRequestResponse);
+    rpc AcceptFriendRequest(AcceptFriendRequestRequest) returns (AcceptFriendRequestResponse);
+    rpc DeslineFriendRequest(DeslineFriendRequestRequest) returns (DeslineFriendRequestResponse);
+    rpc GetFriendList(GetFriendListRequest) returns (GetFriendListResponse);
+    rpc GetFriendRequestList(GetFriendRequestListRequest) returns (GetFriendRequestListResponse);
+    rpc BlockOneUserForAnother(BlockOneUserForAnotherRequest) returns (BlockOneUserForAnotherResponse);
+    rpc GetBlockedUserList(GetBlockedUserListRequest) returns (GetBlockedUserListResponse);
+    rpc UnblockOneUserForAnother(UnblockOneUserForAnotherRequest) returns (UnblockOneUserForAnotherResponse);
+    rpc SearchUser(SearchUserRequest) returns (SearchUserResponse);
+    rpc CheckUserIdAvailability(CheckUserIdAvailabilityRequest) returns (CheckUserIdAvailabilityResponse);
+    rpc CheckIsFriend(CheckIsFriendRequest) returns (CheckIsFriendResponse);
+}
+
+message GetUserRequest {
+    string user_id = 1;
+}
+
+message GetUserResponse {
+    string user_id = 1;
+    string name = 2;
+    string email = 3;
+    optional string image = 4;
+}
+
+message CreateUserRequest {
+    string name = 1;
+    string email = 2;
+    string image = 3;
+    string password = 4;
+}
+
+message CreateUserResponse {
+    string user_id = 1;
+}
+
+message UpdateUserRequest {
+    string user_id = 1;
+    optional string name = 2;
+    optional string email = 3;
+    optional string image = 4;
+}
+
+message UpdateUserResponse {
+    bool result = 1;
+}
+
+message DeleteUserRequest {
+    string user_id = 1;
+}
+
+message DeleteUserResponse {
+    bool result = 1;
+}
+
+message LoginRequest {
+    string email = 1;
+    string password = 2;
+}
+
+message LoginResponse {
+    string token = 1;
+}
+
+message SendFriendRequestRequest {
+    string from_user_id = 1;
+    string to_user_id = 2;
+}
+
+enum FriendRequestFailureReason {
+    BlockedByTarget = 0;
+    AlreadySent = 1;
+    AlreadyFriends = 2;
+}
+
+message SendFriendRequestResponse {
+    optional FriendRequestFailureReason failure_reason = 1;
+}
+
+message AcceptFriendRequestRequest {
+    string from_user_id = 1;
+    string user_id = 2;
+}
+
+message AcceptFriendRequestResponse {
+    bool result = 1;
+}
+
+message DeslineFriendRequestRequest {
+    string from_user_id = 1;
+    string to_user_id = 2;
+}
+
+message DeslineFriendRequestResponse {
+    bool result = 1;
+}
+
+message GetFriendListRequest {
+    string user_id = 1;
+}
+
+message GetFriendListResponse {
+    repeated string friend_user_ids = 1;
+}
+
+message GetFriendRequestListRequest {
+    string user_id = 1;
+}
+
+message GetFriendRequestListResponse {
+    repeated string friend_request_user_ids = 1;
+}
+
+message BlockOneUserForAnotherRequest {
+    string user_id = 1;
+    string blocked_user_id = 2;
+}
+
+enum BlockFailureReason {
+    AlreadyBlocked = 0;
+    
+}
+
+message BlockOneUserForAnotherResponse {
+    optional BlockFailureReason failure_reason = 1;
+}
+
+message GetBlockedUserListRequest {
+    string user_id = 1;
+}
+
+message GetBlockedUserListResponse {
+    repeated string blocked_user_ids = 1;
+}
+
+message UnblockOneUserForAnotherRequest {
+    string user_id = 1;
+    string blocked_user_id = 2;
+}
+
+message UnblockOneUserForAnotherResponse {
+    bool result = 1;
+}
+
+message SearchUserRequest {
+    string query = 1;
+}
+
+message SearchUserResponse {
+    repeated string user_ids = 1;
+}
+
+message CheckUserIdAvailabilityRequest {
+    string user_id = 1;
+}
+
+message CheckUserIdAvailabilityResponse {
+    bool available = 1;
+}
+
+message CheckIsFriendRequest {
+    string user_id = 1;
+    string friend_user_id = 2;
+}
+
+message CheckIsFriendResponse {
+    bool is_friend = 1;
+}
