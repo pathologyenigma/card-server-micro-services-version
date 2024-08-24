@@ -1,6 +1,6 @@
 mod traits {
     tonic::include_proto!("user");
-    use crate::repository::models::users::{NewUser, User};
+    use crate::repository::models::users::{NewUser, UpdateUser, User};
 
     use super::UserService as UserServiceImpl;
     use tonic::{IntoRequest, Response};
@@ -49,24 +49,19 @@ mod traits {
             let user = request.into_inner();
             let user_id = uuid::Uuid::parse_str(&user.user_id);
             if let Ok(id) = user_id {
-                match self.repository.find_user_by_id(id).await {
-                    Some(mut u) => {
-                        if let Some(name) = user.name {
-                            u.name = name;
-                        }
-                        if let Some(email) = user.email {
-                            u.email = email;
-                        }
-                        if let Some(image) = user.image {
-                            u.image = Some(image);
-                        }
-                        self.repository.update_user(u).await?;
-                        Ok(Response::new(UpdateUserResponse {
-                            result: true,
-                        }))
-                    }
-                    None => Err(tonic::Status::not_found("User not found")),
-                }
+                Ok(Response::new(UpdateUserResponse {result: self.repository.update_user(id, UpdateUser::new(user.name, user.email, user.password, user.image)).await}))
+            } else {
+                return Err(tonic::Status::invalid_argument("Invalid user id"));
+            }
+        }
+        async fn delete_user(
+            &self,
+            request: tonic::Request<DeleteUserRequest>,
+        ) -> Result<Response<DeleteUserResponse>, tonic::Status> {
+            let user_id = request.into_inner().user_id;
+            let user_id = uuid::Uuid::parse_str(&user_id);
+            if let Ok(id) = user_id {
+                Ok(Response::new(DeleteUserResponse {result: self.repository.delete_user(id).await}))
             } else {
                 return Err(tonic::Status::invalid_argument("Invalid user id"));
             }

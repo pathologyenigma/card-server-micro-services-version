@@ -6,10 +6,10 @@ use diesel_async::{
         bb8::{Pool, PooledConnection},
         AsyncDieselConnectionManager, ManagerConfig,
     },
-    AsyncPgConnection, RunQueryDsl,
+    AsyncPgConnection,
 };
 use futures_util::{future::BoxFuture, FutureExt};
-use users::{NewUser, User};
+use users::{NewUser, UpdateUser, User};
 
 pub mod friend_requests;
 pub mod users;
@@ -104,10 +104,13 @@ impl UserRepository {
             })
     }
 
-    pub async fn find_user_by_id(&self, user_id: uuid::Uuid) -> Option<User> {
+    pub async fn find_user_by_id(&self, user_id: uuid::Uuid) -> Result<Option<User>, tonic::Status> {
         User::find_by_id(user_id, &mut self.get_connection().await.borrow_mut())
             .await
-            .expect("failed to find user by id")
+            .map_err(|e| match e {
+                 diesel::result::Error::NotFound => tonic::Status::not_found(e.to_string()),
+                 _ => tonic::Status::internal(e.to_string()),
+            })
     }
 
     pub async fn find_user_by_email(&self, email: &str) -> Option<User> {
@@ -121,12 +124,7 @@ impl UserRepository {
             .await
             .expect("failed to find user by text search")
     }
-    pub async fn update_user(&self, user_id: uuid::Uuid, new_user: User) -> Result<User, tonic::Status> {
-        User::update(user_id, new_user, &mut self.get_connection().await.borrow_mut())
-            .await
-            .map_err(|e| match e {
-                 diesel::result::Error::NotFound => tonic::Status::not_found(e.to_string()),
-                 _ => tonic::Status::internal(e.to_string()),
-             })
+    pub async fn update_user(&self, user_id: uuid::Uuid, update_user: UpdateUser) -> bool {
+        User::update(user_id, update_user, &mut self.get_connection().await.borrow_mut()).await.is_ok()
     }
 }
