@@ -6,10 +6,14 @@ use diesel::{
     ExpressionMethods, QueryDsl,
 };
 use diesel_async::{AsyncPgConnection, RunQueryDsl};
-#[derive(Queryable, Selectable, AsChangeset, Identifiable)]
+pub trait User {
+    fn new(id: uuid::Uuid, name: String, email: String, password: String) -> Self;
+}
+
+#[derive(Selectable, AsChangeset, Identifiable)]
 #[diesel(table_name = schema::users)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
-pub struct User {
+pub struct RawUser {
     pub id: uuid::Uuid,
     pub name: String,
     pub email: String,
@@ -26,6 +30,42 @@ pub struct NewUser {
     email: String,
     password: String,
 }
+
+impl User for RawUser {
+    fn new(id: uuid::Uuid, name: String, email: String, password: String) -> Self {
+        Self {
+            id,
+            name,
+            email,
+            password,
+            image: None,
+        }
+    }
+}
+
+impl Queryable<users::SqlType, diesel::pg::Pg> for RawUser {
+    type Row = (
+        uuid::Uuid,
+        String,
+        String,
+        String,
+        Option<String>,
+    );
+
+
+    fn build(row: Self::Row) -> Self {
+        Self {
+            id: row.0,
+            name: row.1,
+            email: row.2,
+            password: row.3,
+            image: row.4,
+        }
+    }
+}
+
+
+
 #[derive(Default)]
 pub struct UpdateUser {
     name: Option<String>,

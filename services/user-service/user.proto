@@ -51,8 +51,18 @@ message UpdateUserRequest {
     optional string password = 5;
 }
 
+enum UpdateUserFailureReason {
+    UserNotFound = 0;
+    NoUpdateDataPrevided = 1;
+}
+
 message UpdateUserResponse {
-    bool result = 1;
+    optional UpdateUserFailureReason failure_reason = 1;
+}
+
+enum DeleteUserFailureReason {
+    UserNotFound = 0;
+    TargetUserIsAlreadyDeleted = 1;
 }
 
 message DeleteUserRequest {
@@ -60,7 +70,7 @@ message DeleteUserRequest {
 }
 
 message DeleteUserResponse {
-    bool result = 1;
+    optional DeleteUserFailureReason failure_reason = 1;
 }
 
 message LoginRequest {

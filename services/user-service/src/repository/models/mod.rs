@@ -127,4 +127,8 @@ impl UserRepository {
     pub async fn update_user(&self, user_id: uuid::Uuid, update_user: UpdateUser) -> bool {
         User::update(user_id, update_user, &mut self.get_connection().await.borrow_mut()).await.is_ok()
     }
+    pub async fn delete_user(&self, user_id: uuid::Uuid) -> bool {
+        User::delete(user_id, &mut self.get_connection().await.borrow_mut()).await.is_ok()
+    }
+    
 }
