@@ -8,17 +8,10 @@ service UserService {
     rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse);
     rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse);
     rpc Login(LoginRequest) returns (LoginResponse);
-    rpc SendFriendRequest(SendFriendRequestRequest) returns (SendFriendRequestResponse);
-    rpc AcceptFriendRequest(AcceptFriendRequestRequest) returns (AcceptFriendRequestResponse);
-    rpc DeslineFriendRequest(DeslineFriendRequestRequest) returns (DeslineFriendRequestResponse);
-    rpc GetFriendList(GetFriendListRequest) returns (GetFriendListResponse);
-    rpc GetFriendRequestList(GetFriendRequestListRequest) returns (GetFriendRequestListResponse);
-    rpc BlockOneUserForAnother(BlockOneUserForAnotherRequest) returns (BlockOneUserForAnotherResponse);
-    rpc GetBlockedUserList(GetBlockedUserListRequest) returns (GetBlockedUserListResponse);
-    rpc UnblockOneUserForAnother(UnblockOneUserForAnotherRequest) returns (UnblockOneUserForAnotherResponse);
+    rpc Logout(LogoutRequest) returns (LogoutResponse);
     rpc SearchUser(SearchUserRequest) returns (SearchUserResponse);
     rpc CheckUserIdAvailability(CheckUserIdAvailabilityRequest) returns (CheckUserIdAvailabilityResponse);
-    rpc CheckIsFriend(CheckIsFriendRequest) returns (CheckIsFriendResponse);
+    rpc CheckTokenIsValid(CheckTokenIsValidRequest) returns (CheckTokenIsValidResponse);
 }
 
 message GetUserRequest {
@@ -30,6 +23,7 @@ message GetUserResponse {
     string name = 2;
     string email = 3;
     optional string image = 4;
+    optional string description = 5;
 }
 
 message CreateUserRequest {
@@ -49,20 +43,11 @@ message UpdateUserRequest {
     optional string email = 3;
     optional string image = 4;
     optional string password = 5;
-}
-
-enum UpdateUserFailureReason {
-    UserNotFound = 0;
-    NoUpdateDataPrevided = 1;
+    optional string description = 6;
 }
 
 message UpdateUserResponse {
-    optional UpdateUserFailureReason failure_reason = 1;
-}
-
-enum DeleteUserFailureReason {
-    UserNotFound = 0;
-    TargetUserIsAlreadyDeleted = 1;
+    int32 updated_count = 1;
 }
 
 message DeleteUserRequest {
@@ -70,7 +55,7 @@ message DeleteUserRequest {
 }
 
 message DeleteUserResponse {
-    optional DeleteUserFailureReason failure_reason = 1;
+    int32 deleted_count = 1;
 }
 
 message LoginRequest {
@@ -79,87 +64,15 @@ message LoginRequest {
 }
 
 message LoginResponse {
+    string user_id = 1;
+}
+
+message LogoutRequest {
     string token = 1;
 }
 
-message SendFriendRequestRequest {
-    string from_user_id = 1;
-    string to_user_id = 2;
-}
-
-enum FriendRequestFailureReason {
-    BlockedByTarget = 0;
-    AlreadySent = 1;
-    AlreadyFriends = 2;
-}
-
-message SendFriendRequestResponse {
-    optional FriendRequestFailureReason failure_reason = 1;
-}
-
-message AcceptFriendRequestRequest {
-    string from_user_id = 1;
-    string user_id = 2;
-}
-
-message AcceptFriendRequestResponse {
-    bool result = 1;
-}
-
-message DeslineFriendRequestRequest {
-    string from_user_id = 1;
-    string to_user_id = 2;
-}
-
-message DeslineFriendRequestResponse {
-    bool result = 1;
-}
-
-message GetFriendListRequest {
-    string user_id = 1;
-}
-
-message GetFriendListResponse {
-    repeated string friend_user_ids = 1;
-}
-
-message GetFriendRequestListRequest {
-    string user_id = 1;
-}
-
-message GetFriendRequestListResponse {
-    repeated string friend_request_user_ids = 1;
-}
-
-message BlockOneUserForAnotherRequest {
-    string user_id = 1;
-    string blocked_user_id = 2;
-}
-
-enum BlockFailureReason {
-    AlreadyBlocked = 0;
-    
-}
-
-message BlockOneUserForAnotherResponse {
-    optional BlockFailureReason failure_reason = 1;
-}
-
-message GetBlockedUserListRequest {
-    string user_id = 1;
-}
-
-message GetBlockedUserListResponse {
-    repeated string blocked_user_ids = 1;
-}
-
-message UnblockOneUserForAnotherRequest {
-    string user_id = 1;
-    string blocked_user_id = 2;
-}
-
-message UnblockOneUserForAnotherResponse {
-    bool result = 1;
+message LogoutResponse {
+    string timestamp = 1;
 }
 
 message SearchUserRequest {
@@ -167,7 +80,7 @@ message SearchUserRequest {
 }
 
 message SearchUserResponse {
-    repeated string user_ids = 1;
+    repeated GetUserResponse users = 1;
 }
 
 message CheckUserIdAvailabilityRequest {
@@ -178,11 +91,10 @@ message CheckUserIdAvailabilityResponse {
     bool available = 1;
 }
 
-message CheckIsFriendRequest {
-    string user_id = 1;
-    string friend_user_id = 2;
+message CheckTokenIsValidRequest {
+    string token = 1;
 }
 
-message CheckIsFriendResponse {
-    bool is_friend = 1;
+message CheckTokenIsValidResponse {
+    bool valid = 1;
 }

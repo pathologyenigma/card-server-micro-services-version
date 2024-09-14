@@ -9,10 +9,12 @@ use diesel_async::{
     AsyncPgConnection,
 };
 use futures_util::{future::BoxFuture, FutureExt};
+use token_records::TokenRecords;
 use users::{NewUser, UpdateUser, User};
 
-pub mod friend_requests;
+
 pub mod users;
+pub mod token_records;
 
 async fn get_conncetion_pool() -> Pool<AsyncPgConnection> {
     dotenvy::dotenv().ok();
@@ -57,12 +59,18 @@ fn root_certs() -> rustls::RootCertStore {
     roots.add_parsable_certificates(certs);
     roots
 }
+#[async_trait::async_trait]
+pub trait Repository {
+    async fn new() -> Self;
+    async fn get_connection(&self) -> PooledConnection<AsyncPgConnection>;
+}
 
 pub struct UserRepository {
     conn: Pool<AsyncPgConnection>,
 }
-impl UserRepository {
-    pub async fn new() -> Self {
+#[async_trait::async_trait]
+impl Repository for UserRepository {
+    async fn new() -> Self {
         Self {
             conn: get_conncetion_pool().await,
         }
@@ -74,6 +82,8 @@ impl UserRepository {
             .await
             .expect("Failed to get connection from pool")
     }
+}
+impl UserRepository {
 
     pub async fn create_user(&self, new_user: NewUser) -> Result<User, tonic::Status> {
         new_user
@@ -119,16 +129,87 @@ impl UserRepository {
             .expect("failed to find user by email")
     }
 
-    pub async fn find_user_by_text_search(&self, query: &str) -> Vec<User> {
+    pub async fn find_user_by_text_search(&self, query: &str) -> Result<Vec<User>, tonic::Status> {
         User::text_search(query, &mut self.get_connection().await.borrow_mut())
             .await
-            .expect("failed to find user by text search")
+            .map_err(|e| match e {
+                 diesel::result::Error::NotFound => tonic::Status::not_found(e.to_string()),
+                 _ => tonic::Status::internal(e.to_string()),
+            })
     }
-    pub async fn update_user(&self, user_id: uuid::Uuid, update_user: UpdateUser) -> bool {
-        User::update(user_id, update_user, &mut self.get_connection().await.borrow_mut()).await.is_ok()
+    pub async fn update_user(&self, user_id: uuid::Uuid, update_user: UpdateUser) -> Result<i32, tonic::Status> {
+        User::update(user_id, update_user, &mut self.get_connection().await.borrow_mut()).await.map_err(|e| {
+            match e {
+                diesel::NotFound => tonic::Status::not_found(e.to_string()),
+                _ => tonic::Status::internal(e.to_string()),
+            }
+        }).map(|_| 1)
     }
-    pub async fn delete_user(&self, user_id: uuid::Uuid) -> bool {
-        User::delete(user_id, &mut self.get_connection().await.borrow_mut()).await.is_ok()
+    pub async fn delete_user(&self, user_id: uuid::Uuid) -> Result<i32, tonic::Status> {
+        User::delete(user_id, &mut self.get_connection().await.borrow_mut()).await.map(|_| 1).map_err(|e| {
+            match e {
+                diesel::NotFound => tonic::Status::not_found(e.to_string()),
+                _ => tonic::Status::internal(e.to_string()),
+            }
+        })
     }
     
+}
+pub struct TokenRecordRepository {
+    conn: Pool<AsyncPgConnection>,
+}
+
+#[async_trait::async_trait]
+impl Repository for TokenRecordRepository {
+    async fn new() -> Self {
+        Self {
+            conn: get_conncetion_pool().await,
+        }
+    }
+    async fn get_connection(&self) -> PooledConnection<AsyncPgConnection> {
+        self.conn
+            .get()
+            .await
+            .expect("Failed to get connection from pool")
+    }
+}
+
+impl TokenRecordRepository {
+    pub async fn create_token_record(&self, token_record: token_records::TokenRecords) -> Result<token_records::TokenRecords, tonic::Status> {
+        token_record
+            .insert_new_token_record(&mut self.get_connection().await.borrow_mut())
+            .await
+            .map_err(|e| match e {
+                diesel::result::Error::InvalidCString(_) => {
+                    tonic::Status::invalid_argument("Invalid string")
+                }
+                diesel::result::Error::DatabaseError(kind, msg) => match kind {
+                    _ => tonic::Status::internal(msg.message()),
+                },
+                diesel::result::Error::NotFound => tonic::Status::not_found(e.to_string()),
+                _ => tonic::Status::internal(e.to_string()),
+            })
+    }
+
+    pub async fn check_token_exists_by_its_value(
+        &self,
+        token_value: &str,
+    ) -> Result<bool, tonic::Status> {
+        TokenRecords::check_token_exists_by_its_value(
+            token_value.to_owned(),
+            &mut self.get_connection().await.borrow_mut(),
+        ).await.map_err(|err| {
+            match err {
+                diesel::result::Error::InvalidCString(_) => {
+                    tonic::Status::invalid_argument("Invalid string")
+                }
+                diesel::result::Error::DatabaseError(kind, msg) => match kind {
+                    _ => tonic::Status::internal(msg.message()),
+                },
+                diesel::result::Error::NotFound => tonic::Status::not_found(err.to_string()),
+                _ => tonic::Status::internal(err.to_string()),
+            }
+        })
+
+    }
 }

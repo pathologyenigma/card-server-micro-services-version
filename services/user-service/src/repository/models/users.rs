@@ -6,19 +6,17 @@ use diesel::{
     ExpressionMethods, QueryDsl,
 };
 use diesel_async::{AsyncPgConnection, RunQueryDsl};
-pub trait User {
-    fn new(id: uuid::Uuid, name: String, email: String, password: String) -> Self;
-}
 
-#[derive(Selectable, AsChangeset, Identifiable)]
+#[derive(Selectable, AsChangeset, Identifiable, Queryable)]
 #[diesel(table_name = schema::users)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
-pub struct RawUser {
+pub struct User {
     pub id: uuid::Uuid,
     pub name: String,
     pub email: String,
     pub password: String,
     pub image: Option<String>,
+    pub description: Option<String>,
 }
 use schema::users;
 
@@ -31,40 +29,6 @@ pub struct NewUser {
     password: String,
 }
 
-impl User for RawUser {
-    fn new(id: uuid::Uuid, name: String, email: String, password: String) -> Self {
-        Self {
-            id,
-            name,
-            email,
-            password,
-            image: None,
-        }
-    }
-}
-
-impl Queryable<users::SqlType, diesel::pg::Pg> for RawUser {
-    type Row = (
-        uuid::Uuid,
-        String,
-        String,
-        String,
-        Option<String>,
-    );
-
-
-    fn build(row: Self::Row) -> Self {
-        Self {
-            id: row.0,
-            name: row.1,
-            email: row.2,
-            password: row.3,
-            image: row.4,
-        }
-    }
-}
-
-
 
 #[derive(Default)]
 pub struct UpdateUser {
@@ -72,6 +36,7 @@ pub struct UpdateUser {
     email: Option<String>,
     password: Option<String>,
     image: Option<String>,
+    description: Option<String>,
 }
 
 impl UpdateUser {
@@ -80,18 +45,21 @@ impl UpdateUser {
             || self.email.is_some()
             || self.password.is_some()
             || self.image.is_some()
+            || self.description.is_some()
     }
     pub fn new(
         name: Option<String>,
         email: Option<String>,
         password: Option<String>,
         image: Option<String>,
+        description: Option<String>,
     ) -> Self {
         Self {
             name,
             email,
             password,
             image,
+            description
         }
     }
 }
